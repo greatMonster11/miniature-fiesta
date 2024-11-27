@@ -1,0 +1,31 @@
+name: Build and Push Docker Image
+
+on:
+  workflow_dispatch:
+    branch:
+      description: 'Something'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Generate image tag
+        run: |
+           BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+           COMMIT_HASH=$(git rev-parse --short HEAD)
+           TIMESTAMP=$(date +%Y%m%d%H%M%S)
+           IMAGE_TAG="${BRANCH_NAME}-${COMMIT_HASH}-${TIMESTAMP}"
+           echo "::set-output name=IMAGE_TAG::$IMAGE_TAG"IMAGE_TAG"
+
+      - name: Build the Docker Image
+        run: |
+          docker build -t monster11/test-build:${{ steps.generate-image-tag.outputs.IMAGE_TAG }} .
+
+      - name: Push the Docker Image
+        run: docker push monster11/test-build:${{ steps.generate-image-tag.outputs.IMAGE_TAG }}
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
